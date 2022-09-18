@@ -24,15 +24,9 @@ func (k msgServer) BuyName(goCtx context.Context, msg *types.MsgBuyName) (*types
 		return nil, errors.Wrap(types.ErrBidParsing, "bid parsing failed")
 	}
 
-	owner, err := sdk.AccAddressFromBech32(whois.Owner)
-	if err != nil {
-		return nil, errors.Wrap(types.ErrConvertingOwner, "converting owner failed")
-	}
+	owner, _ := sdk.AccAddressFromBech32(whois.Owner)
 
-	buyer, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrap(types.ErrConvertingBuyer, "converting buyer failed")
-	}
+	buyer, _ := sdk.AccAddressFromBech32(msg.Creator)
 
 	if isFound {
 		if price.IsAllGT(bid) {
