@@ -33,7 +33,10 @@ export interface BlogMsgCreatePostResponse {
   id?: string;
 }
 
-export type BlogMsgDeleteCommentResponse = object;
+export interface BlogMsgDeleteCommentResponse {
+  /** @format uint64 */
+  id?: string;
+}
 
 /**
  * Params defines the parameters for the module.
@@ -65,6 +68,11 @@ export interface BlogQueryAllCommentResponse {
    *  }
    */
   pagination?: V1Beta1PageResponse;
+}
+
+export interface BlogQueryCommentsResponse {
+  title?: string;
+  body?: string;
 }
 
 export interface BlogQueryGetCommentResponse {
@@ -406,6 +414,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryComment = (id: string, params: RequestParams = {}) =>
     this.request<BlogQueryGetCommentResponse, RpcStatus>({
       path: `/blog/blog/comment/${id}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryComments
+   * @summary Queries a list of Comments items.
+   * @request GET:/blog/blog/comments/{id}
+   */
+  queryComments = (id: string, params: RequestParams = {}) =>
+    this.request<BlogQueryCommentsResponse, RpcStatus>({
+      path: `/blog/blog/comments/${id}`,
       method: "GET",
       format: "json",
       ...params,
