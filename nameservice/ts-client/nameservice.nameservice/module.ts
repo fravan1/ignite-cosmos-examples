@@ -7,10 +7,17 @@ import { msgTypes } from './registry';
 import { IgniteClient } from "../client"
 import { MissingWalletError } from "../helpers"
 import { Api } from "./rest";
+import { MsgSetName } from "./types/nameservice/tx";
 import { MsgBuyName } from "./types/nameservice/tx";
 
 
-export { MsgBuyName };
+export { MsgSetName, MsgBuyName };
+
+type sendMsgSetNameParams = {
+  value: MsgSetName,
+  fee?: StdFee,
+  memo?: string
+};
 
 type sendMsgBuyNameParams = {
   value: MsgBuyName,
@@ -18,6 +25,10 @@ type sendMsgBuyNameParams = {
   memo?: string
 };
 
+
+type msgSetNameParams = {
+  value: MsgSetName,
+};
 
 type msgBuyNameParams = {
   value: MsgBuyName,
@@ -41,6 +52,20 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 
   return {
 		
+		async sendMsgSetName({ value, fee, memo }: sendMsgSetNameParams): Promise<DeliverTxResponse> {
+			if (!signer) {
+					throw new Error('TxClient:sendMsgSetName: Unable to sign Tx. Signer is not present.')
+			}
+			try {			
+				const { address } = (await signer.getAccounts())[0]; 
+				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+				let msg = this.msgSetName({ value: MsgSetName.fromPartial(value) })
+				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
+			} catch (e: any) {
+				throw new Error('TxClient:sendMsgSetName: Could not broadcast Tx: '+ e.message)
+			}
+		},
+		
 		async sendMsgBuyName({ value, fee, memo }: sendMsgBuyNameParams): Promise<DeliverTxResponse> {
 			if (!signer) {
 					throw new Error('TxClient:sendMsgBuyName: Unable to sign Tx. Signer is not present.')
@@ -55,6 +80,14 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
+		
+		msgSetName({ value }: msgSetNameParams): EncodeObject {
+			try {
+				return { typeUrl: "/nameservice.nameservice.MsgSetName", value: MsgSetName.fromPartial( value ) }  
+			} catch (e: any) {
+				throw new Error('TxClient:MsgSetName: Could not create message: ' + e.message)
+			}
+		},
 		
 		msgBuyName({ value }: msgBuyNameParams): EncodeObject {
 			try {
