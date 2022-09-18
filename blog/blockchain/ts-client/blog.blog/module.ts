@@ -8,20 +8,14 @@ import { IgniteClient } from "../client"
 import { MissingWalletError } from "../helpers"
 import { Api } from "./rest";
 import { MsgDeleteComment } from "./types/blog/tx";
-import { MsgCreateComment } from "./types/blog/tx";
 import { MsgCreatePost } from "./types/blog/tx";
+import { MsgCreateComment } from "./types/blog/tx";
 
 
-export { MsgDeleteComment, MsgCreateComment, MsgCreatePost };
+export { MsgDeleteComment, MsgCreatePost, MsgCreateComment };
 
 type sendMsgDeleteCommentParams = {
   value: MsgDeleteComment,
-  fee?: StdFee,
-  memo?: string
-};
-
-type sendMsgCreateCommentParams = {
-  value: MsgCreateComment,
   fee?: StdFee,
   memo?: string
 };
@@ -32,17 +26,23 @@ type sendMsgCreatePostParams = {
   memo?: string
 };
 
+type sendMsgCreateCommentParams = {
+  value: MsgCreateComment,
+  fee?: StdFee,
+  memo?: string
+};
+
 
 type msgDeleteCommentParams = {
   value: MsgDeleteComment,
 };
 
-type msgCreateCommentParams = {
-  value: MsgCreateComment,
-};
-
 type msgCreatePostParams = {
   value: MsgCreatePost,
+};
+
+type msgCreateCommentParams = {
+  value: MsgCreateComment,
 };
 
 
@@ -77,20 +77,6 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
-		async sendMsgCreateComment({ value, fee, memo }: sendMsgCreateCommentParams): Promise<DeliverTxResponse> {
-			if (!signer) {
-					throw new Error('TxClient:sendMsgCreateComment: Unable to sign Tx. Signer is not present.')
-			}
-			try {			
-				const { address } = (await signer.getAccounts())[0]; 
-				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
-				let msg = this.msgCreateComment({ value: MsgCreateComment.fromPartial(value) })
-				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
-			} catch (e: any) {
-				throw new Error('TxClient:sendMsgCreateComment: Could not broadcast Tx: '+ e.message)
-			}
-		},
-		
 		async sendMsgCreatePost({ value, fee, memo }: sendMsgCreatePostParams): Promise<DeliverTxResponse> {
 			if (!signer) {
 					throw new Error('TxClient:sendMsgCreatePost: Unable to sign Tx. Signer is not present.')
@@ -105,6 +91,20 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
+		async sendMsgCreateComment({ value, fee, memo }: sendMsgCreateCommentParams): Promise<DeliverTxResponse> {
+			if (!signer) {
+					throw new Error('TxClient:sendMsgCreateComment: Unable to sign Tx. Signer is not present.')
+			}
+			try {			
+				const { address } = (await signer.getAccounts())[0]; 
+				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+				let msg = this.msgCreateComment({ value: MsgCreateComment.fromPartial(value) })
+				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
+			} catch (e: any) {
+				throw new Error('TxClient:sendMsgCreateComment: Could not broadcast Tx: '+ e.message)
+			}
+		},
+		
 		
 		msgDeleteComment({ value }: msgDeleteCommentParams): EncodeObject {
 			try {
@@ -114,19 +114,19 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
-		msgCreateComment({ value }: msgCreateCommentParams): EncodeObject {
-			try {
-				return { typeUrl: "/blog.blog.MsgCreateComment", value: MsgCreateComment.fromPartial( value ) }  
-			} catch (e: any) {
-				throw new Error('TxClient:MsgCreateComment: Could not create message: ' + e.message)
-			}
-		},
-		
 		msgCreatePost({ value }: msgCreatePostParams): EncodeObject {
 			try {
 				return { typeUrl: "/blog.blog.MsgCreatePost", value: MsgCreatePost.fromPartial( value ) }  
 			} catch (e: any) {
 				throw new Error('TxClient:MsgCreatePost: Could not create message: ' + e.message)
+			}
+		},
+		
+		msgCreateComment({ value }: msgCreateCommentParams): EncodeObject {
+			try {
+				return { typeUrl: "/blog.blog.MsgCreateComment", value: MsgCreateComment.fromPartial( value ) }  
+			} catch (e: any) {
+				throw new Error('TxClient:MsgCreateComment: Could not create message: ' + e.message)
 			}
 		},
 		
