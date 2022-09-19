@@ -7,18 +7,12 @@ import { msgTypes } from './registry';
 import { IgniteClient } from "../client"
 import { MissingWalletError } from "../helpers"
 import { Api } from "./rest";
-import { MsgCommitSolution } from "./types/scavenge/tx";
 import { MsgRevealSolution } from "./types/scavenge/tx";
 import { MsgSubmitScavenge } from "./types/scavenge/tx";
+import { MsgCommitSolution } from "./types/scavenge/tx";
 
 
-export { MsgCommitSolution, MsgRevealSolution, MsgSubmitScavenge };
-
-type sendMsgCommitSolutionParams = {
-  value: MsgCommitSolution,
-  fee?: StdFee,
-  memo?: string
-};
+export { MsgRevealSolution, MsgSubmitScavenge, MsgCommitSolution };
 
 type sendMsgRevealSolutionParams = {
   value: MsgRevealSolution,
@@ -32,10 +26,12 @@ type sendMsgSubmitScavengeParams = {
   memo?: string
 };
 
-
-type msgCommitSolutionParams = {
+type sendMsgCommitSolutionParams = {
   value: MsgCommitSolution,
+  fee?: StdFee,
+  memo?: string
 };
+
 
 type msgRevealSolutionParams = {
   value: MsgRevealSolution,
@@ -43,6 +39,10 @@ type msgRevealSolutionParams = {
 
 type msgSubmitScavengeParams = {
   value: MsgSubmitScavenge,
+};
+
+type msgCommitSolutionParams = {
+  value: MsgCommitSolution,
 };
 
 
@@ -62,20 +62,6 @@ interface TxClientOptions {
 export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "http://localhost:26657", prefix: "cosmos" }) => {
 
   return {
-		
-		async sendMsgCommitSolution({ value, fee, memo }: sendMsgCommitSolutionParams): Promise<DeliverTxResponse> {
-			if (!signer) {
-					throw new Error('TxClient:sendMsgCommitSolution: Unable to sign Tx. Signer is not present.')
-			}
-			try {			
-				const { address } = (await signer.getAccounts())[0]; 
-				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
-				let msg = this.msgCommitSolution({ value: MsgCommitSolution.fromPartial(value) })
-				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
-			} catch (e: any) {
-				throw new Error('TxClient:sendMsgCommitSolution: Could not broadcast Tx: '+ e.message)
-			}
-		},
 		
 		async sendMsgRevealSolution({ value, fee, memo }: sendMsgRevealSolutionParams): Promise<DeliverTxResponse> {
 			if (!signer) {
@@ -105,14 +91,20 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
-		
-		msgCommitSolution({ value }: msgCommitSolutionParams): EncodeObject {
-			try {
-				return { typeUrl: "/scavenge.scavenge.MsgCommitSolution", value: MsgCommitSolution.fromPartial( value ) }  
+		async sendMsgCommitSolution({ value, fee, memo }: sendMsgCommitSolutionParams): Promise<DeliverTxResponse> {
+			if (!signer) {
+					throw new Error('TxClient:sendMsgCommitSolution: Unable to sign Tx. Signer is not present.')
+			}
+			try {			
+				const { address } = (await signer.getAccounts())[0]; 
+				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+				let msg = this.msgCommitSolution({ value: MsgCommitSolution.fromPartial(value) })
+				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
 			} catch (e: any) {
-				throw new Error('TxClient:MsgCommitSolution: Could not create message: ' + e.message)
+				throw new Error('TxClient:sendMsgCommitSolution: Could not broadcast Tx: '+ e.message)
 			}
 		},
+		
 		
 		msgRevealSolution({ value }: msgRevealSolutionParams): EncodeObject {
 			try {
@@ -127,6 +119,14 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 				return { typeUrl: "/scavenge.scavenge.MsgSubmitScavenge", value: MsgSubmitScavenge.fromPartial( value ) }  
 			} catch (e: any) {
 				throw new Error('TxClient:MsgSubmitScavenge: Could not create message: ' + e.message)
+			}
+		},
+		
+		msgCommitSolution({ value }: msgCommitSolutionParams): EncodeObject {
+			try {
+				return { typeUrl: "/scavenge.scavenge.MsgCommitSolution", value: MsgCommitSolution.fromPartial( value ) }  
+			} catch (e: any) {
+				throw new Error('TxClient:MsgCommitSolution: Could not create message: ' + e.message)
 			}
 		},
 		
