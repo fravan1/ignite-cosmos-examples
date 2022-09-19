@@ -8,5 +8,5 @@ import (
 
 // x/scavenge module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidRequest = sdkerrors.Register(ModuleName, 1100, "invalid request")
 )
