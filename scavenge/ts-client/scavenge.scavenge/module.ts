@@ -7,10 +7,17 @@ import { msgTypes } from './registry';
 import { IgniteClient } from "../client"
 import { MissingWalletError } from "../helpers"
 import { Api } from "./rest";
+import { MsgCommitSolution } from "./types/scavenge/tx";
 import { MsgSubmitScavenge } from "./types/scavenge/tx";
 
 
-export { MsgSubmitScavenge };
+export { MsgCommitSolution, MsgSubmitScavenge };
+
+type sendMsgCommitSolutionParams = {
+  value: MsgCommitSolution,
+  fee?: StdFee,
+  memo?: string
+};
 
 type sendMsgSubmitScavengeParams = {
   value: MsgSubmitScavenge,
@@ -18,6 +25,10 @@ type sendMsgSubmitScavengeParams = {
   memo?: string
 };
 
+
+type msgCommitSolutionParams = {
+  value: MsgCommitSolution,
+};
 
 type msgSubmitScavengeParams = {
   value: MsgSubmitScavenge,
@@ -41,6 +52,20 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 
   return {
 		
+		async sendMsgCommitSolution({ value, fee, memo }: sendMsgCommitSolutionParams): Promise<DeliverTxResponse> {
+			if (!signer) {
+					throw new Error('TxClient:sendMsgCommitSolution: Unable to sign Tx. Signer is not present.')
+			}
+			try {			
+				const { address } = (await signer.getAccounts())[0]; 
+				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+				let msg = this.msgCommitSolution({ value: MsgCommitSolution.fromPartial(value) })
+				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
+			} catch (e: any) {
+				throw new Error('TxClient:sendMsgCommitSolution: Could not broadcast Tx: '+ e.message)
+			}
+		},
+		
 		async sendMsgSubmitScavenge({ value, fee, memo }: sendMsgSubmitScavengeParams): Promise<DeliverTxResponse> {
 			if (!signer) {
 					throw new Error('TxClient:sendMsgSubmitScavenge: Unable to sign Tx. Signer is not present.')
@@ -55,6 +80,14 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 			}
 		},
 		
+		
+		msgCommitSolution({ value }: msgCommitSolutionParams): EncodeObject {
+			try {
+				return { typeUrl: "/scavenge.scavenge.MsgCommitSolution", value: MsgCommitSolution.fromPartial( value ) }  
+			} catch (e: any) {
+				throw new Error('TxClient:MsgCommitSolution: Could not create message: ' + e.message)
+			}
+		},
 		
 		msgSubmitScavenge({ value }: msgSubmitScavengeParams): EncodeObject {
 			try {
