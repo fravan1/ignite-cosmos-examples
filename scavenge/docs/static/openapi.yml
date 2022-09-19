@@ -73238,6 +73238,8 @@ definitions:
       the connection handshake.
   scavenge.scavenge.MsgCommitSolutionResponse:
     type: object
+  scavenge.scavenge.MsgRevealSolutionResponse:
+    type: object
   scavenge.scavenge.MsgSubmitScavengeResponse:
     type: object
   scavenge.scavenge.Params:
