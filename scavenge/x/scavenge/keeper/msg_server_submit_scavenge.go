@@ -11,7 +11,7 @@ import (
 func (k msgServer) SubmitScavenge(goCtx context.Context, msg *types.MsgSubmitScavenge) (*types.MsgSubmitScavengeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	scavenge := types.Scavenge{
+	var scavenge = types.Scavenge{
 		Index:        msg.SolutionHash,
 		Description:  msg.Description,
 		SolutionHash: msg.SolutionHash,
@@ -42,6 +42,5 @@ func (k msgServer) SubmitScavenge(goCtx context.Context, msg *types.MsgSubmitSca
 	}
 
 	k.SetScavenge(ctx, scavenge)
-
 	return &types.MsgSubmitScavengeResponse{}, nil
 }
