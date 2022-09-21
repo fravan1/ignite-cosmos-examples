@@ -3,6 +3,7 @@ import * as Long from "long";
 import { util, configure, Writer, Reader } from "protobufjs/minimal";
 import { Params } from "../blog/params";
 import { Post } from "../blog/post";
+import { SentPost } from "../blog/sent_post";
 
 export const protobufPackage = "planet.blog";
 
@@ -11,11 +12,13 @@ export interface GenesisState {
   params: Params | undefined;
   portId: string;
   postList: Post[];
-  /** this line is used by starport scaffolding # genesis/proto/state */
   postCount: number;
+  sentPostList: SentPost[];
+  /** this line is used by starport scaffolding # genesis/proto/state */
+  sentPostCount: number;
 }
 
-const baseGenesisState: object = { portId: "", postCount: 0 };
+const baseGenesisState: object = { portId: "", postCount: 0, sentPostCount: 0 };
 
 export const GenesisState = {
   encode(message: GenesisState, writer: Writer = Writer.create()): Writer {
@@ -31,6 +34,12 @@ export const GenesisState = {
     if (message.postCount !== 0) {
       writer.uint32(32).uint64(message.postCount);
     }
+    for (const v of message.sentPostList) {
+      SentPost.encode(v!, writer.uint32(42).fork()).ldelim();
+    }
+    if (message.sentPostCount !== 0) {
+      writer.uint32(48).uint64(message.sentPostCount);
+    }
     return writer;
   },
 
@@ -39,6 +48,7 @@ export const GenesisState = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseGenesisState } as GenesisState;
     message.postList = [];
+    message.sentPostList = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -54,6 +64,12 @@ export const GenesisState = {
         case 4:
           message.postCount = longToNumber(reader.uint64() as Long);
           break;
+        case 5:
+          message.sentPostList.push(SentPost.decode(reader, reader.uint32()));
+          break;
+        case 6:
+          message.sentPostCount = longToNumber(reader.uint64() as Long);
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -65,6 +81,7 @@ export const GenesisState = {
   fromJSON(object: any): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.postList = [];
+    message.sentPostList = [];
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromJSON(object.params);
     } else {
@@ -85,6 +102,16 @@ export const GenesisState = {
     } else {
       message.postCount = 0;
     }
+    if (object.sentPostList !== undefined && object.sentPostList !== null) {
+      for (const e of object.sentPostList) {
+        message.sentPostList.push(SentPost.fromJSON(e));
+      }
+    }
+    if (object.sentPostCount !== undefined && object.sentPostCount !== null) {
+      message.sentPostCount = Number(object.sentPostCount);
+    } else {
+      message.sentPostCount = 0;
+    }
     return message;
   },
 
@@ -101,12 +128,22 @@ export const GenesisState = {
       obj.postList = [];
     }
     message.postCount !== undefined && (obj.postCount = message.postCount);
+    if (message.sentPostList) {
+      obj.sentPostList = message.sentPostList.map((e) =>
+        e ? SentPost.toJSON(e) : undefined
+      );
+    } else {
+      obj.sentPostList = [];
+    }
+    message.sentPostCount !== undefined &&
+      (obj.sentPostCount = message.sentPostCount);
     return obj;
   },
 
   fromPartial(object: DeepPartial<GenesisState>): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.postList = [];
+    message.sentPostList = [];
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromPartial(object.params);
     } else {
@@ -126,6 +163,16 @@ export const GenesisState = {
       message.postCount = object.postCount;
     } else {
       message.postCount = 0;
+    }
+    if (object.sentPostList !== undefined && object.sentPostList !== null) {
+      for (const e of object.sentPostList) {
+        message.sentPostList.push(SentPost.fromPartial(e));
+      }
+    }
+    if (object.sentPostCount !== undefined && object.sentPostCount !== null) {
+      message.sentPostCount = object.sentPostCount;
+    } else {
+      message.sentPostCount = 0;
     }
     return message;
   },

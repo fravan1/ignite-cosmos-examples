@@ -37,8 +37,27 @@ export interface BlogQueryAllPostResponse {
   pagination?: V1Beta1PageResponse;
 }
 
+export interface BlogQueryAllSentPostResponse {
+  SentPost?: BlogSentPost[];
+
+  /**
+   * PageResponse is to be embedded in gRPC response messages where the
+   * corresponding request message has used PageRequest.
+   *
+   *  message SomeResponse {
+   *          repeated Bar results = 1;
+   *          PageResponse page = 2;
+   *  }
+   */
+  pagination?: V1Beta1PageResponse;
+}
+
 export interface BlogQueryGetPostResponse {
   Post?: BlogPost;
+}
+
+export interface BlogQueryGetSentPostResponse {
+  SentPost?: BlogSentPost;
 }
 
 /**
@@ -47,6 +66,15 @@ export interface BlogQueryGetPostResponse {
 export interface BlogQueryParamsResponse {
   /** params holds all the parameters of this module. */
   params?: BlogParams;
+}
+
+export interface BlogSentPost {
+  /** @format uint64 */
+  id?: string;
+  postID?: string;
+  title?: string;
+  chain?: string;
+  creator?: string;
 }
 
 export interface ProtobufAny {
@@ -377,6 +405,48 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryPost = (id: string, params: RequestParams = {}) =>
     this.request<BlogQueryGetPostResponse, RpcStatus>({
       path: `/planet/blog/post/${id}`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QuerySentPostAll
+   * @summary Queries a list of SentPost items.
+   * @request GET:/planet/blog/sent_post
+   */
+  querySentPostAll = (
+    query?: {
+      "pagination.key"?: string;
+      "pagination.offset"?: string;
+      "pagination.limit"?: string;
+      "pagination.count_total"?: boolean;
+      "pagination.reverse"?: boolean;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<BlogQueryAllSentPostResponse, RpcStatus>({
+      path: `/planet/blog/sent_post`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QuerySentPost
+   * @summary Queries a SentPost by id.
+   * @request GET:/planet/blog/sent_post/{id}
+   */
+  querySentPost = (id: string, params: RequestParams = {}) =>
+    this.request<BlogQueryGetSentPostResponse, RpcStatus>({
+      path: `/planet/blog/sent_post/${id}`,
       method: "GET",
       format: "json",
       ...params,
