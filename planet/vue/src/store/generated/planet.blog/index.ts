@@ -3,9 +3,10 @@ import { Client, registry, MissingWalletError } from 'planet-client-ts'
 import { BlogPacketData } from "planet-client-ts/planet.blog/types"
 import { NoData } from "planet-client-ts/planet.blog/types"
 import { Params } from "planet-client-ts/planet.blog/types"
+import { Post } from "planet-client-ts/planet.blog/types"
 
 
-export { BlogPacketData, NoData, Params };
+export { BlogPacketData, NoData, Params, Post };
 
 function initClient(vuexGetters) {
 	return new Client(vuexGetters['common/env/getEnv'], vuexGetters['common/wallet/signer'])
@@ -37,11 +38,14 @@ function getStructure(template) {
 const getDefaultState = () => {
 	return {
 				Params: {},
+				Post: {},
+				PostAll: {},
 				
 				_Structure: {
 						BlogPacketData: getStructure(BlogPacketData.fromPartial({})),
 						NoData: getStructure(NoData.fromPartial({})),
 						Params: getStructure(Params.fromPartial({})),
+						Post: getStructure(Post.fromPartial({})),
 						
 		},
 		_Registry: registry,
@@ -75,6 +79,18 @@ export default {
 						(<any> params).query=null
 					}
 			return state.Params[JSON.stringify(params)] ?? {}
+		},
+				getPost: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.Post[JSON.stringify(params)] ?? {}
+		},
+				getPostAll: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.PostAll[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -127,6 +143,54 @@ export default {
 				return getters['getParams']( { params: {...key}, query}) ?? {}
 			} catch (e) {
 				throw new Error('QueryClient:QueryParams API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryPost({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const client = initClient(rootGetters);
+				let value= (await client.PlanetBlog.query.queryPost( key.id)).data
+				
+					
+				commit('QUERY', { query: 'Post', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryPost', payload: { options: { all }, params: {...key},query }})
+				return getters['getPost']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryPost API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryPostAll({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const client = initClient(rootGetters);
+				let value= (await client.PlanetBlog.query.queryPostAll(query ?? undefined)).data
+				
+					
+				while (all && (<any> value).pagination && (<any> value).pagination.next_key!=null) {
+					let next_values=(await client.PlanetBlog.query.queryPostAll({...query ?? {}, 'pagination.key':(<any> value).pagination.next_key} as any)).data
+					value = mergeResults(value, next_values);
+				}
+				commit('QUERY', { query: 'PostAll', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryPostAll', payload: { options: { all }, params: {...key},query }})
+				return getters['getPostAll']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryPostAll API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
