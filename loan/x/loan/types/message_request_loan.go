@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -41,9 +42,30 @@ func (msg *MsgRequestLoan) GetSignBytes() []byte {
 }
 
 func (msg *MsgRequestLoan) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return errors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	amount, _ := sdk.ParseCoinsNormalized(msg.Amount)
+	if !amount.IsValid() {
+		return errors.Wrap(sdkerrors.ErrInvalidRequest, "amount is not a valid Coins object")
+	}
+	if amount.Empty() {
+		return errors.Wrap(sdkerrors.ErrInvalidRequest, "amount is empty")
+	}
+
+	fee, _ := sdk.ParseCoinsNormalized(msg.Fee)
+	if !fee.IsValid() {
+		return errors.Wrap(sdkerrors.ErrInvalidRequest, "fee is not a valid Coins object")
+	}
+
+	collateral, _ := sdk.ParseCoinsNormalized(msg.Collateral)
+	if !collateral.IsValid() {
+		return errors.Wrap(sdkerrors.ErrInvalidRequest, "collateral is not a valid Coins object")
+	}
+	if collateral.Empty() {
+		return errors.Wrap(sdkerrors.ErrInvalidRequest, "collateral is empty")
+	}
+	
 	return nil
 }
