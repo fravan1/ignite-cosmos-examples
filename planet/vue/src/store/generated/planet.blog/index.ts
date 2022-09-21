@@ -2,13 +2,15 @@ import { Client, registry, MissingWalletError } from 'planet-client-ts'
 
 import { BlogPacketData } from "planet-client-ts/planet.blog/types"
 import { NoData } from "planet-client-ts/planet.blog/types"
+import { IbcPostPacketData } from "planet-client-ts/planet.blog/types"
+import { IbcPostPacketAck } from "planet-client-ts/planet.blog/types"
 import { Params } from "planet-client-ts/planet.blog/types"
 import { Post } from "planet-client-ts/planet.blog/types"
 import { SentPost } from "planet-client-ts/planet.blog/types"
 import { TimedoutPost } from "planet-client-ts/planet.blog/types"
 
 
-export { BlogPacketData, NoData, Params, Post, SentPost, TimedoutPost };
+export { BlogPacketData, NoData, IbcPostPacketData, IbcPostPacketAck, Params, Post, SentPost, TimedoutPost };
 
 function initClient(vuexGetters) {
 	return new Client(vuexGetters['common/env/getEnv'], vuexGetters['common/wallet/signer'])
@@ -50,6 +52,8 @@ const getDefaultState = () => {
 				_Structure: {
 						BlogPacketData: getStructure(BlogPacketData.fromPartial({})),
 						NoData: getStructure(NoData.fromPartial({})),
+						IbcPostPacketData: getStructure(IbcPostPacketData.fromPartial({})),
+						IbcPostPacketAck: getStructure(IbcPostPacketAck.fromPartial({})),
 						Params: getStructure(Params.fromPartial({})),
 						Post: getStructure(Post.fromPartial({})),
 						SentPost: getStructure(SentPost.fromPartial({})),
@@ -324,7 +328,33 @@ export default {
 		},
 		
 		
+		async sendMsgSendIbcPost({ rootGetters }, { value, fee = [], memo = '' }) {
+			try {
+				const client=await initClient(rootGetters)
+				const result = await client.PlanetBlog.tx.sendMsgSendIbcPost({ value, fee: {amount: fee, gas: "200000"}, memo })
+				return result
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgSendIbcPost:Init Could not initialize signing client. Wallet is required.')
+				}else{
+					throw new Error('TxClient:MsgSendIbcPost:Send Could not broadcast Tx: '+ e.message)
+				}
+			}
+		},
 		
+		async MsgSendIbcPost({ rootGetters }, { value }) {
+			try {
+				const client=initClient(rootGetters)
+				const msg = await client.PlanetBlog.tx.msgSendIbcPost({value})
+				return msg
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgSendIbcPost:Init Could not initialize signing client. Wallet is required.')
+				} else{
+					throw new Error('TxClient:MsgSendIbcPost:Create Could not create message: ' + e.message)
+				}
+			}
+		},
 		
 	}
 }

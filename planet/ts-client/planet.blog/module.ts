@@ -7,10 +7,21 @@ import { msgTypes } from './registry';
 import { IgniteClient } from "../client"
 import { MissingWalletError } from "../helpers"
 import { Api } from "./rest";
+import { MsgSendIbcPost } from "./types/blog/tx";
 
 
-export {  };
+export { MsgSendIbcPost };
 
+type sendMsgSendIbcPostParams = {
+  value: MsgSendIbcPost,
+  fee?: StdFee,
+  memo?: string
+};
+
+
+type msgSendIbcPostParams = {
+  value: MsgSendIbcPost,
+};
 
 
 export const registry = new Registry(msgTypes);
@@ -30,6 +41,28 @@ export const txClient = ({ signer, prefix, addr }: TxClientOptions = { addr: "ht
 
   return {
 		
+		async sendMsgSendIbcPost({ value, fee, memo }: sendMsgSendIbcPostParams): Promise<DeliverTxResponse> {
+			if (!signer) {
+					throw new Error('TxClient:sendMsgSendIbcPost: Unable to sign Tx. Signer is not present.')
+			}
+			try {			
+				const { address } = (await signer.getAccounts())[0]; 
+				const signingClient = await SigningStargateClient.connectWithSigner(addr,signer,{registry, prefix});
+				let msg = this.msgSendIbcPost({ value: MsgSendIbcPost.fromPartial(value) })
+				return await signingClient.signAndBroadcast(address, [msg], fee ? fee : defaultFee, memo)
+			} catch (e: any) {
+				throw new Error('TxClient:sendMsgSendIbcPost: Could not broadcast Tx: '+ e.message)
+			}
+		},
+		
+		
+		msgSendIbcPost({ value }: msgSendIbcPostParams): EncodeObject {
+			try {
+				return { typeUrl: "/planet.blog.MsgSendIbcPost", value: MsgSendIbcPost.fromPartial( value ) }  
+			} catch (e: any) {
+				throw new Error('TxClient:MsgSendIbcPost: Could not create message: ' + e.message)
+			}
+		},
 		
 	}
 };
